@@ -323,9 +323,6 @@ else:
     wireModel = sys.argv[3]
     edgeCapFactor[0] = float(sys.argv[4])
 
-def_file_name = 'sample-designs/cpu6502/cpu6502.def'
-lef_file_name = 'sample-designs/cpu6502/merged_unpadded.lef'
-
 # convert DEF to readable format
 covnertToDef57(def_file_name)
 
