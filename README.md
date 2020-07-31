@@ -12,7 +12,7 @@ A Python library that reads LEF and DEF files, extract the RC parasitics and gen
    
    pip install sympy
   
-   pip install matplotpy   
+   pip install matplotlib   
    
    git clone https://github.com/HanyMoussa/SPEF_EXTRACTOR/
    ```
