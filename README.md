@@ -1,5 +1,5 @@
 # SPEF-Extractor
-A Python library that reads LEF and DEF files, extract the RC parasitics and generate their corresponding SPEF file.:<br />
+A Python library that reads LEF and DEF files, extracts the RC parasitics and generates their corresponding SPEF file.:<br />
 
 ## Dependancies:  
   In order to parse the lef and def files, we used [trimcao's def and lef parser](https://github.com/trimcao/lef-parser)
