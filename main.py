@@ -1,5 +1,5 @@
 '''
-Authers:
+Authors:
     Ramez Moussa
     Hany Moussa
 '''
@@ -665,18 +665,19 @@ maxCapNet = ["*0"]
 minCap = [1]
 minCapNet = ["*0"]
 
-f = open(str(def_file_name[:-4]) + ".spef","w+")
+f = open(str(def_file_name[:-4]) + ".spef","w+", newline='\n')
 print("Start writing SPEF file")
 printSPEFHeader()
 printNameMap(map_of_names)
 printSPEFNets(netsDict)  
 f.close()
-content = codecs.open(str(def_file_name[:-4]) + ".spef", encoding='utf-8').read()
+
+
+content = open(str(def_file_name[:-4]) + ".spef", "r+").read()
 newContent = content.replace('<', '[')
 newContent = newContent.replace('>', ']')
-newContent = newContent.replace('\n', '')
 
-f =  open(str(def_file_name[:-4]) + ".spef","w+")
+f =  open(str(def_file_name[:-4]) + ".spef","w+", newline='\n')
 f.write(newContent)
 os.remove(def_file_name[:-4] + '_new.def')
 print("Writing SPEF is done")
