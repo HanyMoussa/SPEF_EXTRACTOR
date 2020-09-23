@@ -34,7 +34,9 @@ class DefParser:
         self.design_name = None
         self.units = None
         self.scale = None
-
+        # add support for custom VIAS
+        self.vias = []
+        
     def parse(self):
         """
         Main method to parse the DEF file
@@ -52,6 +54,9 @@ class DefParser:
                 info = split_space(each_part)
                 if len(info) > 0:
                     #print info
+                    if(info[0] == "VIAS"):
+                        handleVias(self.vias, f)
+                    
                     if info[0] == "PINS":
                         new_pins = Pins(int(info[1]))
                         self.stack.append(new_pins)
@@ -181,6 +186,16 @@ class DefParser:
         print("Writing done.")
         f.close()
 
+
+
+def handleVias(vias, f):
+    
+    viasData = []
+    line = next(f)
+    
+    while(line.strip().lower() != 'end vias'):
+        vias.append(line)
+        line = next(f)
 
 # Main Class
 #if __name__ == '__main__':

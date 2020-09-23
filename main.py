@@ -18,6 +18,42 @@ import os
 #in order to print Date in the SPEF file
 now = datetime.datetime.now()
 
+
+
+# this extracts the vias and viarules definied in the def file given the lines in which the vias are defined
+def extractViasFromDef(vias_data):
+    vias = {}
+    for line in vias_data:
+        l = line.strip().split()
+        if(len(l) > 0):
+            
+            if(l[0] == '-'):
+                current_via_name = l[1]
+                vias[current_via_name] = []
+                
+            elif(l[0] != ';'):
+                vias[current_via_name].append(l)
+        
+    
+    
+    for via, lines in vias.items():
+        
+        current_via = {}
+        viaRule = (lines[0][1].lower() == 'viarule')
+        if(viaRule):
+            for line in lines:
+                current_via[line[1]] = line[2:]
+        
+        
+        else:
+            layers = []
+            for line in lines:
+                layers.append(line[2])
+            current_via['LAYERS'] = layers
+        vias_dict_def[via] = current_via
+        
+        
+
 #name mapping method that reduces all net names in order to minimize the SPEF size
 def remap_names(): 
     name_counter = 0
@@ -156,18 +192,34 @@ def getPinLocation(instanceName, pinName, metalLayer, listOfPinRects):
 def getViaType(via): #method to extract the via type by its name fromt the lef file
     
     # this 'met' and 'li1' have to be handeled design by design.
-    firstLayer = lef_parser.via_dict[via].layers[0]
-    secondLayer = lef_parser.via_dict[via].layers[1]
-    thirdLayer = lef_parser.via_dict[via].layers[2]
+    if via in lef_parser.via_dict:
+        firstLayer = lef_parser.via_dict[via].layers[0].name
+        secondLayer = lef_parser.via_dict[via].layers[1].name
+        thirdLayer = lef_parser.via_dict[via].layers[2].name
+        
+        
+        
+    elif via in vias_dict_def:
+        firstLayer = vias_dict_def[via]['LAYERS'][0]
+        secondLayer = vias_dict_def[via]['LAYERS'][1]
+        thirdLayer = vias_dict_def[via]['LAYERS'][2]
+        
+        
+    if(lef_parser.layer_dict[firstLayer].layer_type == 'CUT'):
+        cutLayer = firstLayer
+
+        
+    if(lef_parser.layer_dict[secondLayer].layer_type == 'CUT'):
+        cutLayer = secondLayer
+
     
-    if(firstLayer.name[0:3] != 'met' and  firstLayer.name[0:3] !=  'li1'):
-        via_type = firstLayer.name
-    if(secondLayer.name[0:3] != 'met' and  secondLayer.name[0:3] !=  'li1'):
-        via_type = secondLayer.name
+    if(lef_parser.layer_dict[thirdLayer].layer_type == 'CUT'):
+        cutLayer = thirdLayer
+
+       
     
-    if(thirdLayer.name[0:3] != 'met' and  thirdLayer.name[0:3] !=  'li1'):
-        via_type = thirdLayer.name
-    return via_type
+    
+    return cutLayer
                  
    
 #method to get the resistance of a certain segment (wire of via) using its length (distance between 2 points) and info from the lef file
@@ -299,10 +351,11 @@ bigPinsTable={}
 bigSegmentsTable = {}
 bigCapacitanceTable = {}
 netsDict = {}
-
+vias_dict_def = {}
 
 edgeCapFactor = [1]
 wireModel = 'PI'
+
 
 # this section is responsible for allowing the script to run directly from a terminal
 if(len(sys.argv) < 5):
@@ -323,6 +376,8 @@ else:
     wireModel = sys.argv[3]
     edgeCapFactor[0] = float(sys.argv[4])
 
+
+
 # convert DEF to readable format
 covnertToDef57(def_file_name)
 
@@ -335,6 +390,7 @@ lef_parser.parse()
 def_parser = DefParser(def_file_name[:-4] + '_new.def')
 def_parser.parse()
 
+extractViasFromDef(def_parser.vias)
 
 lefUnits = extractLefUnits(lef_file_name)
 
@@ -479,21 +535,36 @@ for net in def_parser.nets:
                 if(myVia[-1] == ';'):
                     myVia = myVia[0:-1]
                 
-                firstLayer = lef_parser.via_dict[myVia].layers[0]
-                secondLayer = lef_parser.via_dict[myVia].layers[1]
-                thirdLayer = lef_parser.via_dict[myVia].layers[2]
                 
-                s = firstLayer.name[0:3];
-                if(firstLayer.name[0:3] != 'met' and  firstLayer.name[0:3] != 'li1'):
-                    first = secondLayer.name
-                    second = thirdLayer.name
-                if(secondLayer.name[0:3] != 'met' and  secondLayer.name[0:3] !=  'li1'):
-                    first = firstLayer.name
-                    second = thirdLayer.name
+                if myVia in lef_parser.via_dict:
+                    firstLayer = lef_parser.via_dict[myVia].layers[0].name
+                    secondLayer = lef_parser.via_dict[myVia].layers[1].name
+                    thirdLayer = lef_parser.via_dict[myVia].layers[2].name
+                    
+
+
+                elif myVia in vias_dict_def:
+
+                    firstLayer = vias_dict_def[myVia]['LAYERS'][0]
+                    secondLayer= vias_dict_def[myVia]['LAYERS'][1]
+                    thirdLayer = vias_dict_def[myVia]['LAYERS'][2]
+             
                 
-                if(thirdLayer.name[0:3] != 'met' and  thirdLayer.name[0:3] !=  'li1'):
-                    first = firstLayer.name
-                    second = secondLayer.name
+                if lef_parser.layer_dict[firstLayer].layer_type == 'CUT':
+                    cutLayer = firstLayer
+                    first = secondLayer
+                    second = thirdLayer
+                    
+                if(lef_parser.layer_dict[secondLayer].layer_type == 'CUT'):
+                    cutLayer = secondLayer
+                    first = firstLayer
+                    second = thirdLayer
+                
+                if(lef_parser.layer_dict[thirdLayer].layer_type == 'CUT'):
+                    cutLayer = thirdLayer
+                    first = firstLayer
+                    second = secondLayer
+                    
                     
                 if(first == segment.layer):
                     choose = 2  # choose second layer in case of creating end node
@@ -501,6 +572,9 @@ for net in def_parser.nets:
                 else:
                     choose = 1  # choose first layer in case of creating end node
                     eflag=checkPinsTable(epoint, first, pinsTable)
+            
+                    
+                
                     
             else:
                 eflag=checkPinsTable(epoint, segment.layer, pinsTable)
